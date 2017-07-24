@@ -6,7 +6,7 @@ import (
 	"math"
 	"strings"
 
-	jgk "github.com/masaMikam/jumangok"
+	"github.com/evalpaca/jumangok/jmg"
 	_ "github.com/mattn/go-sqlite3" //sqlite3
 
 	"fmt"
@@ -25,20 +25,16 @@ const (
 type Service struct {
 	db    *sql.DB
 	Chars []string
-	Words []*jgk.Word
+	Words []*jmg.Word
 	Time  time.Duration
 }
 
 func NewTalkService(db *sql.DB, chars ...string) *Service {
-	s := new(Service)
-	s.db = db
-	s.Chars = chars
 	return &Service{
 		db:    db,
 		Chars: chars,
 		Time:  time.Second * 10,
 	}
-	return s
 }
 
 func (s *Service) String() string {
@@ -80,7 +76,7 @@ func (s *Service) String() string {
 }
 
 // tqb is a trigram query builder.
-func tqb(t []*jgk.Word, mode int, chars ...string) (string, error) {
+func tqb(t []*jmg.Word, mode int, chars ...string) (string, error) {
 	tl := len(t)
 	if tl < 2 {
 		return "", errors.New("less than 2 words")
@@ -124,13 +120,13 @@ func (s *Service) ThinkingTime(t time.Duration) *Service {
 }
 
 func (s *Service) TrigramMarkovChain(words ...string) *Service {
-	s.Words = make([]*jgk.Word, len(words)+3)
-	s.Words[0] = &jgk.Word{Surface: "", Pos: "", Meta: &jgk.Meta{TFscore: 0}}
-	s.Words[1] = &jgk.Word{Surface: "", Pos: "", Meta: &jgk.Meta{TFscore: 0}}
-	s.Words[2] = &jgk.Word{Surface: bos, Entry: bos, Pos: bos, Meta: &jgk.Meta{TFscore: 0}}
+	s.Words = make([]*jmg.Word, len(words)+3)
+	s.Words[0] = &jmg.Word{Surface: "", Pos: "", Meta: &jmg.Meta{TFscore: 0}}
+	s.Words[1] = &jmg.Word{Surface: "", Pos: "", Meta: &jmg.Meta{TFscore: 0}}
+	s.Words[2] = &jmg.Word{Surface: bos, Lemma: bos, Pos: bos, Meta: &jmg.Meta{TFscore: 0}}
 	mode := -20
 	for i, w := range words {
-		s.Words[i+3] = &jgk.Word{Surface: w, Pos: "", Meta: &jgk.Meta{TFscore: 0}}
+		s.Words[i+3] = &jmg.Word{Surface: w, Pos: "", Meta: &jmg.Meta{TFscore: 0}}
 	}
 	qcmap := make(map[string][]randutil.Choice, 30)
 	qm := make(map[string]int, 0)
@@ -170,7 +166,7 @@ func (s *Service) TrigramMarkovChain(words ...string) *Service {
 					case "名詞<数詞>", "特殊<記号>":
 						cnt = int64(float64(cnt) / 2.0)
 					}
-					cs = append(cs, randutil.Choice{Weight: int(cnt), Item: &jgk.Word{Surface: w, Pos: p, Meta: &jgk.Meta{TFscore: cnt}}})
+					cs = append(cs, randutil.Choice{Weight: int(cnt), Item: &jmg.Word{Surface: w, Pos: p, Meta: &jmg.Meta{TFscore: cnt}}})
 				}
 				qcmap[q] = cs
 			}
@@ -182,7 +178,7 @@ func (s *Service) TrigramMarkovChain(words ...string) *Service {
 				mode++
 				continue
 			case 1:
-				tri, ok := cs[0].Item.(*jgk.Word)
+				tri, ok := cs[0].Item.(*jmg.Word)
 				if ok && tri != nil {
 					s.Words = append(s.Words, tri)
 					mode = 0
@@ -195,7 +191,7 @@ func (s *Service) TrigramMarkovChain(words ...string) *Service {
 		choose_loop:
 			for i := 0; i < len(cs); i++ {
 				result, _ := randutil.WeightedChoice(cs)
-				tri, ok := result.Item.(*jgk.Word)
+				tri, ok := result.Item.(*jmg.Word)
 				switch {
 				case !ok:
 					continue
