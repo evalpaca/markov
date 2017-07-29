@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evalpaca/markov"
+	"github.com/paka3m/markov"
 )
 
 func main() {

@@ -6,8 +6,8 @@ import (
 	"math"
 	"strings"
 
-	"github.com/evalpaca/jumangok/jmg"
 	_ "github.com/mattn/go-sqlite3" //sqlite3
+	"github.com/paka3m/jumangok/jmg"
 
 	"fmt"
 	"sort"
